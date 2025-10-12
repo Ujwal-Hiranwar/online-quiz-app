@@ -1,0 +1,31 @@
+# IDE files
+.idea/
+*.iml
+*.iws
+.classpath
+.project
+.settings
+.vscode/
+
+# Maven/Java
+Backend/application/target/
+Backend/application/.mvn/
+*.log
+
+# Node.js
+Frontend/app/node_modules/
+Frontend/app/build/
+Frontend/app/dist/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+
+# OS generated files
+.DS_Store
+Thumbs.db
