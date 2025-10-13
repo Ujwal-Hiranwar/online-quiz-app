@@ -38,6 +38,16 @@ public class UserService {
         User user = getCurrentUser();
         return convertToDTO(user);
     }
+
+    @Transactional
+    public UserDTO updateCurrentUserProfile(UserDTO userDTO) {
+        User user = getCurrentUser();
+        user.setFirstName(userDTO.getFirstName());
+        user.setLastName(userDTO.getLastName());
+        // Add other fields to update as needed
+        User updatedUser = userRepository.save(user);
+        return convertToDTO(updatedUser);
+    }
     
     @Transactional(readOnly = true)
     public List<UserDTO> getAllUsers() {

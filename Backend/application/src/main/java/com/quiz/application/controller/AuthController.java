@@ -20,14 +20,18 @@ public class AuthController {
     
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+        System.out.println("AUTH-CONTROLLER: Received request to register user: " + request.getUsername());
         AuthResponse response = authService.register(request);
+        System.out.println("AUTH-CONTROLLER: User registered successfully: " + request.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "User registered successfully"));
     }
     
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+        System.out.println("AUTH-CONTROLLER: Received request to login user: " + request.getUsername());
         AuthResponse response = authService.login(request);
+        System.out.println("AUTH-CONTROLLER: User logged in successfully: " + request.getUsername());
         return ResponseEntity.ok(ApiResponse.success(response, "Login successful"));
     }
 }

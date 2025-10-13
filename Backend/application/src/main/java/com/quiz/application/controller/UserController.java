@@ -3,6 +3,7 @@ package com.quiz.application.controller;
 import com.quiz.application.dto.ApiResponse;
 import com.quiz.application.dto.UserDTO;
 import com.quiz.application.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +22,12 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserDTO>> getCurrentUser() {
         UserDTO user = userService.getCurrentUserProfile();
         return ResponseEntity.ok(ApiResponse.success(user, "User profile retrieved successfully"));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserDTO>> updateCurrentUserProfile(@Valid @RequestBody UserDTO userDTO) {
+        UserDTO updatedUser = userService.updateCurrentUserProfile(userDTO);
+        return ResponseEntity.ok(ApiResponse.success(updatedUser, "User profile updated successfully"));
     }
     
     @GetMapping("/{id}")
