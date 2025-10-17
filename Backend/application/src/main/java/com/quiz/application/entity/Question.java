@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "questions")
@@ -12,8 +14,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(callSuper = true, exclude = {"quiz", "options"})
-@ToString(exclude = {"quiz", "options"})
+@EqualsAndHashCode(callSuper = true, exclude = {"quiz", "options", "userAnswers"})
+@ToString(exclude = {"quiz", "options", "userAnswers"})
 public class Question extends BaseEntity {
     
     @Id
@@ -42,7 +44,12 @@ public class Question extends BaseEntity {
     
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("optionOrder ASC")
+    @Builder.Default
     private List<QuestionOption> options = new ArrayList<>();
+
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<UserAnswer> userAnswers = new HashSet<>();
     
     public enum QuestionType {
         SINGLE_CHOICE, MULTIPLE_CHOICE

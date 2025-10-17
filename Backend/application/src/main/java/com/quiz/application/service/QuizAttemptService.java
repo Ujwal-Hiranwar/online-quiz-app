@@ -11,8 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,6 +39,9 @@ public class QuizAttemptService {
     
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private QuestionService questionService;
     
     @Transactional
     public QuizAttemptDTO startQuiz(StartQuizRequest request) {
@@ -43,10 +49,6 @@ public class QuizAttemptService {
         
         Quiz quiz = quizRepository.findByIdWithQuestions(request.getQuizId())
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + request.getQuizId()));
-        
-        if (!quiz.getActive()) {
-            throw new BadRequestException("This quiz is not active");
-        }
         
         QuizAttempt attempt = QuizAttempt.builder()
                 .user(currentUser)
@@ -57,7 +59,12 @@ public class QuizAttemptService {
                 .build();
         
         attempt = quizAttemptRepository.save(attempt);
-        return convertToDTO(attempt);
+        
+        List<QuestionDTO> questions = questionService.getQuestionsByQuizId(quiz.getId());
+        QuizAttemptDTO attemptDTO = convertToDTO(attempt);
+        attemptDTO.setQuestions(questions);
+        
+        return attemptDTO;
     }
     
     @Transactional
@@ -145,8 +152,12 @@ public class QuizAttemptService {
         if (attempt.getTotalScore() > 0) {
             double percentage = (double) scoreObtained / attempt.getTotalScore() * 100;
             attempt.setPercentageScore(percentage);
+            if (attempt.getQuiz().getPassingScore() != null) {
+                attempt.setIsPassed(percentage >= attempt.getQuiz().getPassingScore());
+            }
         } else {
             attempt.setPercentageScore(0.0);
+            attempt.setIsPassed(false);
         }
 
 
@@ -174,8 +185,33 @@ public class QuizAttemptService {
     @Transactional(readOnly = true)
     public List<QuizAttemptDTO> getMyAttempts() {
         User currentUser = userService.getCurrentUser();
-        return quizAttemptRepository.findCompletedAttemptsByUserId(currentUser.getId()).stream()
-                .map(this::convertToDTO)
+        Long userId = currentUser.getId();
+
+        List<QuizAttempt> allUserAttempts = quizAttemptRepository.findByUserId(userId);
+
+        // Filter for completed attempts first
+        List<QuizAttempt> completedAttempts = allUserAttempts.stream()
+                .filter(att -> att.getStatus() == QuizAttempt.AttemptStatus.COMPLETED)
+                .collect(Collectors.toList());
+
+        Map<Long, List<QuizAttempt>> completedAttemptsByQuiz = completedAttempts.stream()
+                .collect(Collectors.groupingBy(att -> att.getQuiz().getId()));
+
+        Map<Long, Integer> attemptNumberMap = new HashMap<>();
+        for (List<QuizAttempt> quizAttempts : completedAttemptsByQuiz.values()) {
+            quizAttempts.sort(Comparator.comparing(QuizAttempt::getCreatedAt).thenComparing(QuizAttempt::getId));
+            for (int i = 0; i < quizAttempts.size(); i++) {
+                attemptNumberMap.put(quizAttempts.get(i).getId(), i + 1);
+            }
+        }
+
+        return completedAttempts.stream()
+                .sorted(Comparator.comparing(QuizAttempt::getEndTime).reversed())
+                .map(attempt -> {
+                    QuizAttemptDTO dto = convertToDTO(attempt);
+                    dto.setAttemptCount(attemptNumberMap.get(attempt.getId()));
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
     
@@ -187,20 +223,23 @@ public class QuizAttemptService {
                 .collect(Collectors.toList());
     }
     
-    private QuizAttemptDTO convertToDTO(QuizAttempt attempt) {
+    public QuizAttemptDTO convertToDTO(QuizAttempt attempt) {
         return QuizAttemptDTO.builder()
                 .id(attempt.getId())
                 .userId(attempt.getUser().getId())
                 .username(attempt.getUser().getUsername())
                 .quizId(attempt.getQuiz().getId())
                 .quizTitle(attempt.getQuiz().getTitle())
+                .timeLimitMinutes(attempt.getQuiz().getTimeLimitMinutes())
                 .startTime(attempt.getStartTime())
                 .endTime(attempt.getEndTime())
                 .scoreObtained(attempt.getScoreObtained())
                 .totalScore(attempt.getTotalScore())
                 .percentageScore(attempt.getPercentageScore())
+                .isPassed(attempt.getIsPassed())
                 .status(attempt.getStatus().name())
                 .timeTakenMinutes(attempt.getTimeTakenMinutes())
+                .totalQuestions(attempt.getQuiz().getQuestions().size())
                 .build();
     }
     

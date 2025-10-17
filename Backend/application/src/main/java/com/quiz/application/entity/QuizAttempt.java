@@ -43,7 +43,10 @@ public class QuizAttempt extends BaseEntity {
     
     @Column(name = "percentage_score")
     private Double percentageScore;
-    
+
+    @Column(name = "is_passed")
+    private Boolean isPassed;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AttemptStatus status = AttemptStatus.IN_PROGRESS;

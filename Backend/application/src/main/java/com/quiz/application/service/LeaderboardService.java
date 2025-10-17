@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -72,15 +73,15 @@ public class LeaderboardService {
     @Transactional(readOnly = true)
     public List<LeaderboardEntryDTO> getQuizLeaderboard(Long quizId, int limit) {
         List<QuizAttempt> quizAttempts = quizAttemptRepository.findTopScoresByQuizId(quizId);
-        
+
         // Group by user and get best score
         Map<Long, QuizAttempt> bestAttemptsByUser = quizAttempts.stream()
                 .collect(Collectors.toMap(
                         attempt -> attempt.getUser().getId(),
                         attempt -> attempt,
-                        (a1, a2) -> a1.getScoreObtained() > a2.getScoreObtained() ? a1 : a2
+                        (a1, a2) -> a1.getScoreObtained() >= a2.getScoreObtained() ? a1 : a2
                 ));
-        
+
         List<LeaderboardEntryDTO> leaderboard = bestAttemptsByUser.values().stream()
                 .map(attempt -> LeaderboardEntryDTO.builder()
                         .userId(attempt.getUser().getId())
@@ -92,15 +93,16 @@ public class LeaderboardService {
                         .attemptCount(1)
                         .quizId(attempt.getQuiz().getId())
                         .quizTitle(attempt.getQuiz().getTitle())
+                        .totalQuestions(attempt.getQuiz().getQuestions().size())
                         .build())
-                .sorted((a, b) -> b.getTotalScore().compareTo(a.getTotalScore()))
+                .sorted(Comparator.comparing(LeaderboardEntryDTO::getTotalScore).reversed())
                 .collect(Collectors.toList());
-        
+
         // Assign ranks
         for (int i = 0; i < leaderboard.size(); i++) {
             leaderboard.get(i).setRank(i + 1);
         }
-        
+
         // Return top N
         return leaderboard.stream()
                 .limit(limit)

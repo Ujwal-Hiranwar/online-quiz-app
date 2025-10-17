@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import AdminDashboardComponent from '../components/admin/AdminDashboard';
 import AdminQuizList from '../components/admin/QuizList';
-import { FaHome, FaClipboardList } from 'react-icons/fa';
+import UserList from '../components/admin/UserList';
+import { FaHome, FaClipboardList, FaUsers } from 'react-icons/fa';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -44,13 +45,25 @@ const AdminDashboard = () => {
               <FaClipboardList />
               <span>Manage Quizzes</span>
             </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`flex items-center space-x-2 pb-4 px-2 border-b-2 font-medium transition-colors ${
+                activeTab === 'users'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+              }`}
+            >
+              <FaUsers />
+              <span>Manage Users</span>
+            </button>
           </div>
         </div>
 
         {/* Tab Content */}
         <div>
-          {activeTab === 'overview' && <AdminDashboardComponent />}
+          {activeTab === 'overview' && <AdminDashboardComponent setActiveTab={setActiveTab} />}
           {activeTab === 'quizzes' && <AdminQuizList />}
+          {activeTab === 'users' && <UserList />}
         </div>
       </div>
     </div>

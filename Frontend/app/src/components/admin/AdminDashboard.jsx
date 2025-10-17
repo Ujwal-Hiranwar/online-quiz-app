@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../../services/api';
 import Loader from '../common/Loader';
-import { FaClipboardList, FaUsers, FaQuestionCircle, FaChartLine } from 'react-icons/fa';
+import { FaClipboardList, FaUsers, FaTrophy } from 'react-icons/fa';
 
-const AdminDashboardComponent = () => {
+const AdminDashboardComponent = ({ setActiveTab }) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -16,7 +17,7 @@ const AdminDashboardComponent = () => {
     try {
       setLoading(true);
       const response = await api.get('/admin/stats');
-      setStats(response.data);
+      setStats(response.data.data);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to fetch statistics');
     } finally {
@@ -25,7 +26,7 @@ const AdminDashboardComponent = () => {
   };
 
   if (loading) {
-    return <Loader fullScreen />;
+    return <Loader size="large" text="Loading Statistics..." />;
   }
 
   const statCards = [
@@ -37,32 +38,18 @@ const AdminDashboardComponent = () => {
       textColor: 'text-primary',
     },
     {
-      title: 'Total Questions',
-      value: stats?.totalQuestions || 0,
-      icon: <FaQuestionCircle className="text-4xl text-secondary" />,
-      bgColor: 'bg-green-50',
-      textColor: 'text-secondary',
-    },
-    {
       title: 'Total Users',
       value: stats?.totalUsers || 0,
       icon: <FaUsers className="text-4xl text-warning" />,
       bgColor: 'bg-yellow-50',
       textColor: 'text-warning',
     },
-    {
-      title: 'Total Attempts',
-      value: stats?.totalAttempts || 0,
-      icon: <FaChartLine className="text-4xl text-red-500" />,
-      bgColor: 'bg-red-50',
-      textColor: 'text-red-500',
-    },
   ];
 
   return (
     <div>
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {statCards.map((card, index) => (
           <div
             key={index}
@@ -79,39 +66,35 @@ const AdminDashboardComponent = () => {
         ))}
       </div>
 
-      {/* Recent Activity */}
-      {stats?.recentActivities && stats.recentActivities.length > 0 && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            {stats.recentActivities.map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div>
-                  <p className="font-semibold text-gray-900">{activity.userName}</p>
-                  <p className="text-sm text-gray-600">
-                    Completed: {activity.quizTitle}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(activity.completedAt).toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className={`text-2xl font-bold ${
-                    activity.score >= 80 ? 'text-green-600' :
-                    activity.score >= 60 ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
-                    {activity.score}%
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Quick Actions */}
+      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            onClick={() => setActiveTab('quizzes')}
+            className="flex items-center justify-center space-x-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <FaClipboardList />
+            <span>Manage Quizzes</span>
+          </button>
+          <Link
+            to="/leaderboard"
+            className="flex items-center justify-center space-x-2 bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors"
+          >
+            <FaTrophy />
+            <span>Quiz Results</span>
+          </Link>
+          <button
+            onClick={() => setActiveTab('users')}
+            className="flex items-center justify-center space-x-2 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <FaUsers />
+            <span>Manage Users</span>
+          </button>
         </div>
-      )}
+      </div>
+
+
     </div>
   );
 };

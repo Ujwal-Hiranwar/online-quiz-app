@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,7 +26,6 @@ public class QuizCreateRequest {
     private Integer timeLimitMinutes;
     
     private Integer passingScore;
-    
-    @NotNull(message = "Active status is required")
-    private Boolean active = true;
+
+    private List<QuestionInQuizCreateRequest> questions;
 }

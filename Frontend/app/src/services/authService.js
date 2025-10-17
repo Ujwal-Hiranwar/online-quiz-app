@@ -8,7 +8,7 @@ const authService = {
       console.log("AUTH-SERVICE: Sending signup request with data:", userData);
       const response = await api.post('/auth/register', userData);
       console.log("AUTH-SERVICE: Signup request successful, response:", response.data);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error("AUTH-SERVICE: Signup request failed, error:", error.response?.data || error.message);
       throw error.response?.data?.message || 'Signup failed';
@@ -21,17 +21,17 @@ const authService = {
       console.log("AUTH-SERVICE: Sending login request with credentials:", credentials);
       const response = await api.post('/auth/login', credentials);
       console.log("AUTH-SERVICE: Login request successful, response:", response.data);
-      if (response.data.token) {
+      if (response.data.data.token) {
         const user = {
-          id: response.data.id,
-          username: response.data.username,
-          email: response.data.email,
-          role: response.data.role,
+          id: response.data.data.id,
+          username: response.data.data.username,
+          email: response.data.data.email,
+          role: response.data.data.role,
         };
-        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('token', response.data.data.token);
         localStorage.setItem('user', JSON.stringify(user));
       }
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error("AUTH-SERVICE: Login request failed, error:", error.response?.data || error.message);
       throw error.response?.data?.message || 'Login failed';

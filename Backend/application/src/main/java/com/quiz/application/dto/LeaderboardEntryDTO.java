@@ -20,4 +20,5 @@ public class LeaderboardEntryDTO {
     private Integer attemptCount;
     private Long quizId;
     private String quizTitle;
+    private Integer totalQuestions;
 }

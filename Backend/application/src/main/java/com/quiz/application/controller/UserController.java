@@ -24,6 +24,12 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(user, "User profile retrieved successfully"));
     }
 
+    @GetMapping("/me/stats")
+    public ResponseEntity<ApiResponse<com.quiz.application.dto.UserStatsDTO>> getCurrentUserStats() {
+        com.quiz.application.dto.UserStatsDTO stats = userService.getUserStats();
+        return ResponseEntity.ok(ApiResponse.success(stats, "User statistics retrieved successfully"));
+    }
+
     @PutMapping("/me")
     public ResponseEntity<ApiResponse<UserDTO>> updateCurrentUserProfile(@Valid @RequestBody UserDTO userDTO) {
         UserDTO updatedUser = userService.updateCurrentUserProfile(userDTO);

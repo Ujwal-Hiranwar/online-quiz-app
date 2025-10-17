@@ -12,46 +12,50 @@ const QuizTaking = () => {
     const { quizId } = useParams();
     const navigate = useNavigate();
 
+    const [loading, setLoading] = useState(true);
     const [quiz, setQuiz] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [attemptId, setAttemptId] = useState(null);
+    const [answers, setAnswers] = useState({}); // Stores { selection, result } for each questionId
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answers, setAnswers] = useState({});
-    const [loading, setLoading] = useState(true);
     const [timeRemaining, setTimeRemaining] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmitQuiz = useCallback(async () => {
-        if (!attemptId) return;
+    const handleCompleteQuiz = useCallback(async (force = false) => {
+        if (isSubmitting) return;
+
+        const answeredCount = Object.values(answers).filter(a => a.result).length;
+        if (!force && answeredCount < questions.length) {
+            const confirmed = window.confirm(
+                `You have not answered all questions. Do you want to submit anyway?`
+            );
+            if (!confirmed) return;
+        }
 
         setIsSubmitting(true);
         try {
             const result = await quizService.completeQuiz(attemptId);
-            toast.success('Quiz submitted successfully!');
-            navigate(`/quiz/${quizId}/result`, { state: { result: result.data } });
+            toast.success('Quiz completed successfully!');
+            navigate(`/quiz/${quizId}/result`, { state: { result } });
         } catch (error) {
-            toast.error(error || 'Failed to submit quiz');
+            toast.error(error || 'Failed to complete quiz');
             setIsSubmitting(false);
         }
-    }, [attemptId, quizId, navigate]);
+    }, [attemptId, answers, questions, isSubmitting, navigate, quizId]);
 
     useEffect(() => {
         const startNewQuiz = async () => {
             try {
                 setLoading(true);
-                const [quizData, questionsData, attemptData] = await Promise.all([
-                    quizService.getQuizById(quizId),
-                    quizService.getQuizQuestions(quizId),
-                    quizService.startQuiz(quizId)
-                ]);
-                setQuiz(quizData.data);
-                setQuestions(questionsData.data);
-                setAttemptId(attemptData.data.id);
-                if (quizData.data.timeLimitMinutes) {
-                    setTimeRemaining(quizData.data.timeLimitMinutes * 60);
+                const attempt = await quizService.startQuiz(quizId);
+                setAttemptId(attempt.id);
+                setQuiz({ title: attempt.quizTitle });
+                setQuestions(attempt.questions);
+                if (attempt.timeLimitMinutes) {
+                    setTimeRemaining(attempt.timeLimitMinutes * 60);
                 }
             } catch (error) {
-                toast.error(error || 'Failed to load quiz');
+                toast.error(error || 'Failed to start quiz');
                 navigate('/dashboard');
             } finally {
                 setLoading(false);
@@ -62,39 +66,46 @@ const QuizTaking = () => {
 
     useEffect(() => {
         if (timeRemaining === null || timeRemaining <= 0) return;
-
         const timer = setInterval(() => {
             setTimeRemaining(prev => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    handleSubmitQuiz();
+                    handleCompleteQuiz(true);
                     return 0;
                 }
                 return prev - 1;
             });
         }, 1000);
-
         return () => clearInterval(timer);
-    }, [timeRemaining, handleSubmitQuiz]);
+    }, [timeRemaining, handleCompleteQuiz]);
 
-    const handleAnswerSelect = async (answer) => {
-        const questionId = questions[currentQuestionIndex].id;
-        const selectedOptionIds = Array.isArray(answer) ? answer.map(i => questions[currentQuestionIndex].options[i].id) : [questions[currentQuestionIndex].options[answer].id];
+    const handleSelectionChange = (questionId, selection) => {
+        setAnswers(prev => ({
+            ...prev,
+            [questionId]: { ...prev[questionId], selection },
+        }));
+    };
 
-        setAnswers({
-            ...answers,
-            [questionId]: answer
-        });
+    const handleAnswerSubmit = async (questionId) => {
+        const answer = answers[questionId];
+        if (!answer || !answer.selection || answer.selection.length === 0) {
+            toast.warn('Please select an option first.');
+            return;
+        }
 
         try {
-            await quizService.submitAnswer({
+            const result = await quizService.submitAnswer({
                 attemptId,
                 questionId,
-                selectedOptionIds,
+                selectedOptionIds: answer.selection,
             });
-            toast.info('Answer saved!');
+            setAnswers(prev => ({
+                ...prev,
+                [questionId]: { ...prev[questionId], result },
+            }));
+            toast.success(result.isCorrect ? 'Correct!' : 'Incorrect.', { autoClose: 1500 });
         } catch (error) {
-            toast.error(error || 'Failed to save answer');
+            toast.error(error || 'Failed to submit answer');
         }
     };
 
@@ -110,83 +121,60 @@ const QuizTaking = () => {
         }
     };
 
-    if (loading || !quiz) {
-        return <Loader fullScreen />;
+    if (loading) {
+        return <Loader fullScreen size="large" text="Preparing Your Quiz..." />;
     }
 
     const currentQuestion = questions[currentQuestionIndex];
-    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+    const progress = (Object.values(answers).filter(a => a.result).length / questions.length) * 100;
+    const isCurrentQuestionAnswered = !!answers[currentQuestion?.id]?.result;
 
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-white rounded-xl shadow-md p-6 mb-6">
                     <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{quiz.title}</h1>
-                            <p className="text-gray-600">{quiz.description}</p>
-                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900">{quiz?.title}</h1>
                         {timeRemaining !== null && (
                             <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${timeRemaining < 60 ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
                                 <FaClock />
-                                <span className="font-mono text-lg font-bold">
-                                    {formatTime(timeRemaining)}
-                                </span>
+                                <span className="font-mono text-lg font-bold">{formatTime(timeRemaining)}</span>
                             </div>
                         )}
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                            className="bg-primary h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${progress}%` }}
-                        ></div>
+                        <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">
-                        Progress: {currentQuestionIndex + 1} / {questions.length}
-                    </p>
+                    <p className="text-sm text-gray-600 mt-2">Progress: {Object.values(answers).filter(a => a.result).length} / {questions.length}</p>
                 </div>
 
-                <QuestionDisplay
-                    question={currentQuestion}
-                    questionNumber={currentQuestionIndex + 1}
-                    totalQuestions={questions.length}
-                    selectedAnswer={answers[currentQuestion.id]}
-                    onAnswerSelect={handleAnswerSelect}
-                />
+                {currentQuestion && (
+                    <QuestionDisplay
+                        question={currentQuestion}
+                        questionNumber={currentQuestionIndex + 1}
+                        totalQuestions={questions.length}
+                        answerState={answers[currentQuestion.id]}
+                        onSelectionChange={handleSelectionChange}
+                        onAnswerSubmit={handleAnswerSubmit}
+                    />
+                )}
 
                 <div className="mt-6 flex items-center justify-between">
-                    <Button
-                        variant="outline"
-                        onClick={handlePrevious}
-                        disabled={currentQuestionIndex === 0}
-                        className="flex items-center space-x-2"
-                    >
+                    <Button variant="outline" onClick={handlePrevious} disabled={currentQuestionIndex === 0} className="flex items-center space-x-2">
                         <FaArrowLeft />
                         <span>Previous</span>
                     </Button>
-
-                    <div className="flex space-x-3">
-                        {currentQuestionIndex === questions.length - 1 ? (
-                            <Button
-                                variant="secondary"
-                                onClick={handleSubmitQuiz}
-                                disabled={isSubmitting}
-                                className="flex items-center space-x-2"
-                            >
-                                <FaCheck />
-                                <span>{isSubmitting ? 'Submitting...' : 'Submit Quiz'}</span>
-                            </Button>
-                        ) : (
-                            <Button
-                                variant="primary"
-                                onClick={handleNext}
-                                className="flex items-center space-x-2"
-                            >
-                                <span>Next</span>
-                                <FaArrowRight />
-                            </Button>
-                        )}
-                    </div>
+                    {currentQuestionIndex === questions.length - 1 ? (
+                        <Button variant="secondary" onClick={() => handleCompleteQuiz(false)} disabled={!isCurrentQuestionAnswered || isSubmitting} className="flex items-center space-x-2">
+                            <FaCheck />
+                            <span>{isSubmitting ? 'Finishing...' : 'Finish Quiz'}</span>
+                        </Button>
+                    ) : (
+                        <Button variant="primary" onClick={handleNext} disabled={!isCurrentQuestionAnswered} className="flex items-center space-x-2">
+                            <span>Next</span>
+                            <FaArrowRight />
+                        </Button>
+                    )}
                 </div>
 
                 <div className="mt-8 bg-white rounded-xl shadow-md p-6">
@@ -196,30 +184,17 @@ const QuizTaking = () => {
                             <button
                                 key={q.id}
                                 onClick={() => setCurrentQuestionIndex(index)}
-                                className={`aspect-square rounded-lg font-medium transition-colors ${index === currentQuestionIndex
-                                        ? 'bg-primary text-white'
-                                        : answers[q.id] !== undefined
-                                            ? 'bg-secondary text-white'
+                                className={`aspect-square rounded-lg font-medium transition-colors ${
+                                    index === currentQuestionIndex
+                                        ? 'border-2 border-primary bg-blue-100'
+                                        : answers[q.id]?.result
+                                            ? answers[q.id].result.isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                     }`}
                             >
                                 {index + 1}
                             </button>
                         ))}
-                    </div>
-                    <div className="mt-4 flex items-center justify-center space-x-6 text-sm">
-                        <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-secondary rounded"></div>
-                            <span>Answered</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-primary rounded"></div>
-                            <span>Current</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-gray-200 rounded"></div>
-                            <span>Unanswered</span>
-                        </div>
                     </div>
                 </div>
             </div>

@@ -41,18 +41,17 @@ public class Quiz extends BaseEntity {
     @Column(name = "passing_score")
     private Integer passingScore;
     
-    @Column(nullable = false)
-    private Boolean active = true;
-    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
     
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("questionOrder ASC")
+    @Builder.Default
     private List<Question> questions = new ArrayList<>();
     
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<QuizAttempt> quizAttempts = new HashSet<>();
     
     public enum DifficultyLevel {

@@ -1,8 +1,11 @@
 package com.quiz.application.service;
 
 import com.quiz.application.dto.UserDTO;
+import com.quiz.application.dto.UserStatsDTO;
+import com.quiz.application.entity.QuizAttempt;
 import com.quiz.application.entity.User;
 import com.quiz.application.exception.ResourceNotFoundException;
+import com.quiz.application.repository.QuizAttemptRepository;
 import com.quiz.application.repository.UserRepository;
 import com.quiz.application.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,11 @@ public class UserService {
     
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private QuizAttemptRepository quizAttemptRepository;
+
+
     
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -55,8 +63,46 @@ public class UserService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public UserStatsDTO getUserStats() {
+        User currentUser = getCurrentUser();
+        List<QuizAttempt> completedAttempts = quizAttemptRepository.findCompletedAttemptsByUserId(currentUser.getId());
+
+        if (completedAttempts.isEmpty()) {
+            return UserStatsDTO.builder()
+                    .totalQuizzesTaken(0)
+                    .averageScore(0)
+                    .bestScore(0)
+                    .totalPoints(0)
+                    .build();
+        }
+
+        long totalQuizzesTaken = completedAttempts.size();
+
+        double averageScore = completedAttempts.stream()
+                .mapToDouble(QuizAttempt::getPercentageScore)
+                .average()
+                .orElse(0.0);
+
+        double bestScore = completedAttempts.stream()
+                .mapToDouble(QuizAttempt::getPercentageScore)
+                .max()
+                .orElse(0.0);
+
+        int totalPoints = completedAttempts.stream()
+                .mapToInt(QuizAttempt::getScoreObtained)
+                .sum();
+
+        return UserStatsDTO.builder()
+                .totalQuizzesTaken(totalQuizzesTaken)
+                .averageScore(averageScore)
+                .bestScore(bestScore)
+                .totalPoints(totalPoints)
+                .build();
+    }
     
-    private UserDTO convertToDTO(User user) {
+    public UserDTO convertToDTO(User user) {
         return UserDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())

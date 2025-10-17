@@ -8,7 +8,7 @@ import { FaPlus, FaTrash } from 'react-icons/fa';
 const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     questionText: '',
-    type: 'SINGLE_CHOICE',
+    questionType: 'SINGLE_CHOICE',
     difficulty: 'MEDIUM',
     options: ['', '', '', ''],
     correctAnswers: [],
@@ -21,10 +21,10 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
     if (question) {
       setFormData({
         questionText: question.questionText || '',
-        type: question.type || 'SINGLE_CHOICE',
+        questionType: question.questionType || 'SINGLE_CHOICE',
         difficulty: question.difficulty || 'MEDIUM',
-        options: question.options || ['', '', '', ''],
-        correctAnswers: question.correctAnswers || [],
+        options: question.options.map(o => o.optionText) || ['', '', '', ''],
+        correctAnswers: question.options.map((o, i) => o.isCorrect ? i : -1).filter(i => i !== -1) || [],
         explanation: question.explanation || '',
       });
     }
@@ -80,7 +80,7 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
   };
 
   const handleCorrectAnswerToggle = (index) => {
-    if (formData.type === 'SINGLE_CHOICE') {
+    if (formData.questionType === 'SINGLE_CHOICE') {
       setFormData(prev => ({
         ...prev,
         correctAnswers: [index]
@@ -128,10 +128,19 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
     setLoading(true);
 
     try {
+      const formattedOptions = formData.options
+        .map((optionText, index) => ({
+          optionText: optionText,
+          isCorrect: formData.correctAnswers.includes(index),
+          optionOrder: index + 1,
+        }))
+        .filter(opt => opt.optionText.trim() !== '');
+
       const submitData = {
         ...formData,
-        options: formData.options.filter(opt => opt.trim() !== ''),
+        options: formattedOptions,
       };
+      delete submitData.correctAnswers;
 
       await onSubmit(submitData);
       toast.success(question ? 'Question updated successfully!' : 'Question added successfully!');
@@ -169,8 +178,8 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
             Question Type <span className="text-red-500">*</span>
           </label>
           <select
-            name="type"
-            value={formData.type}
+            name="questionType"
+            value={formData.questionType}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           >
@@ -178,7 +187,7 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
             <option value="MULTIPLE_CHOICE">Multiple Choice</option>
           </select>
           <p className="text-xs text-gray-500 mt-1">
-            {formData.type === 'SINGLE_CHOICE' 
+            {formData.questionType === 'SINGLE_CHOICE' 
               ? 'User can select only one option' 
               : 'User can select multiple options'}
           </p>
@@ -225,7 +234,7 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
           {formData.options.map((option, index) => (
             <div key={index} className="flex items-center space-x-2">
               <input
-                type={formData.type === 'SINGLE_CHOICE' ? 'radio' : 'checkbox'}
+                type={formData.questionType === 'SINGLE_CHOICE' ? 'radio' : 'checkbox'}
                 checked={formData.correctAnswers.includes(index)}
                 onChange={() => handleCorrectAnswerToggle(index)}
                 className="w-5 h-5 text-primary border-gray-300 focus:ring-primary"
@@ -256,7 +265,7 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
         )}
 
         <p className="text-xs text-gray-500 mt-2">
-          Check the {formData.type === 'SINGLE_CHOICE' ? 'radio button' : 'checkbox(es)'} to mark correct answer(s)
+          Check the {formData.questionType === 'SINGLE_CHOICE' ? 'radio button' : 'checkbox(es)'} to mark correct answer(s)
         </p>
       </div>
 

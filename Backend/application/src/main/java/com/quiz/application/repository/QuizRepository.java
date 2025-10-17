@@ -12,16 +12,12 @@ import java.util.Optional;
 @Repository
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
     
-    List<Quiz> findByActiveTrue();
-    
     List<Quiz> findByTopic(String topic);
-    
-    List<Quiz> findByActiveTrueAndTopic(String topic);
     
     @Query("SELECT q FROM Quiz q LEFT JOIN FETCH q.questions WHERE q.id = :id")
     Optional<Quiz> findByIdWithQuestions(@Param("id") Long id);
     
-    @Query("SELECT DISTINCT q.topic FROM Quiz q WHERE q.active = true ORDER BY q.topic")
+    @Query("SELECT DISTINCT q.topic FROM Quiz q ORDER BY q.topic")
     List<String> findAllDistinctTopics();
     
     @Query("SELECT q FROM Quiz q WHERE q.createdBy.id = :userId")

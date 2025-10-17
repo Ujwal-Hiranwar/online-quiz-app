@@ -20,6 +20,15 @@ const userService = {
       throw error.response?.data?.message || 'Failed to update profile';
     }
   },
+  // Get user statistics
+  getUserStats: async () => {
+    try {
+      const response = await api.get('/users/me/stats');
+      return response.data.data;
+    } catch (error) {
+      throw error.response?.data?.message || 'Failed to fetch statistics';
+    }
+  },
 };
 
 export default userService;

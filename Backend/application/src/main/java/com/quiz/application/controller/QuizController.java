@@ -51,8 +51,8 @@ public class QuizController {
     }
     
     @GetMapping
-    public ResponseEntity<ApiResponse<List<QuizDTO>>> getAllActiveQuizzes() {
-        List<QuizDTO> quizzes = quizService.getAllActiveQuizzes();
+    public ResponseEntity<ApiResponse<List<QuizDTO>>> getAllQuizzes() {
+        List<QuizDTO> quizzes = quizService.getAllQuizzes();
         return ResponseEntity.ok(ApiResponse.success(quizzes, "Quizzes retrieved successfully"));
     }
     

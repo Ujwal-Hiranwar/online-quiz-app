@@ -53,7 +53,7 @@ const QuizList = () => {
   };
 
   if (loading) {
-    return <Loader />;
+    return <Loader size="large" text="Loading Quizzes..." />;
   }
 
   return (

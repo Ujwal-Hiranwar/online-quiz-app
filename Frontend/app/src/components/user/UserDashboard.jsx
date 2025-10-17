@@ -26,7 +26,7 @@ const UserDashboardComponent = () => {
   };
 
   if (loading) {
-    return <Loader fullScreen />;
+    return <Loader size="large" text="Loading Your Stats..." />;
   }
 
   const statCards = [
@@ -104,39 +104,7 @@ const UserDashboardComponent = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      {stats?.recentQuizzes && stats.recentQuizzes.length > 0 && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            {stats.recentQuizzes.map((quiz, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div>
-                  <p className="font-semibold text-gray-900">{quiz.quizTitle}</p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(quiz.completedAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className={`text-2xl font-bold ${
-                    quiz.score >= 80 ? 'text-green-600' :
-                    quiz.score >= 60 ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
-                    {quiz.score}%
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {quiz.correctAnswers}/{quiz.totalQuestions}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

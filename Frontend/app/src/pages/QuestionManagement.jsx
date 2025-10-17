@@ -59,7 +59,7 @@ const QuestionManagement = () => {
     if (!confirmed) return;
 
     try {
-      await api.delete(`/quizzes/${quizId}/questions/${questionId}`);
+      await api.delete(`/questions/${questionId}`);
       toast.success('Question deleted successfully!');
       fetchQuizData();
     } catch (error) {
@@ -69,10 +69,11 @@ const QuestionManagement = () => {
 
   const handleSubmitQuestion = async (questionData) => {
     try {
+      const submitPayload = { ...questionData, quizId: parseInt(quizId) };
       if (isEditing && selectedQuestion) {
-        await api.put(`/quizzes/${quizId}/questions/${selectedQuestion.id}`, questionData);
+        await api.put(`/questions/${selectedQuestion.id}`, submitPayload);
       } else {
-        await api.post(`/quizzes/${quizId}/questions`, questionData);
+        await api.post('/questions', submitPayload);
       }
       setShowModal(false);
       fetchQuizData();
@@ -82,7 +83,7 @@ const QuestionManagement = () => {
   };
 
   if (loading) {
-    return <Loader fullScreen />;
+    return <Loader fullScreen size="large" text="Loading Questions..." />;
   }
 
   return (
@@ -176,17 +177,17 @@ const QuestionManagement = () => {
                     <div
                       key={optIndex}
                       className={`flex items-center space-x-3 p-3 rounded-lg ${
-                        question.correctAnswers?.includes(optIndex)
+                        option.isCorrect
                           ? 'bg-green-50 border-2 border-green-500'
                           : 'bg-gray-50 border-2 border-gray-200'
                       }`}
                     >
-                      {question.correctAnswers?.includes(optIndex) && (
+                      {option.isCorrect && (
                         <FaCheckCircle className="text-green-600" />
                       )}
-                      <span className="flex-1">{option}</span>
+                      <span className="flex-1">{option.optionText}</span>
                     </div>
-                  ))}
+                  ))}}
                 </div>
 
                 {/* Explanation */}

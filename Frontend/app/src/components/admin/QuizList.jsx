@@ -77,7 +77,7 @@ const AdminQuizList = () => {
   };
 
   if (loading) {
-    return <Loader />;
+    return <Loader size="large" text="Loading Quizzes..." />;
   }
 
   return (
@@ -113,22 +113,8 @@ const AdminQuizList = () => {
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="mb-2">
                       <h3 className="text-xl font-bold text-gray-900">{quiz.title}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        quiz.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {quiz.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        quiz.difficulty === 'EASY' ? 'bg-green-100 text-green-800' :
-                        quiz.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {quiz.difficulty}
-                      </span>
                     </div>
                     <p className="text-gray-600 mb-2">{quiz.description}</p>
                     <div className="flex items-center space-x-4 text-sm text-gray-500">

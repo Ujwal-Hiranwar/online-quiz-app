@@ -16,6 +16,7 @@ import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import QuizTaking from './pages/QuizTaking';
 import QuizHistory from './pages/QuizHistory';
+import QuizResult from './pages/QuizResult';
 import LeaderboardPage from './pages/LeaderboardPage';
 import NotFound from './pages/NotFound';
 import QuestionManagement from './pages/QuestionManagement';
@@ -52,6 +53,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <QuizTaking />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/quiz/:quizId/result"
+                element={
+                  <ProtectedRoute>
+                    <QuizResult />
                   </ProtectedRoute>
                 }
               />

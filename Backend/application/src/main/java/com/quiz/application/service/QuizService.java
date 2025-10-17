@@ -2,10 +2,13 @@ package com.quiz.application.service;
 
 import com.quiz.application.dto.QuizCreateRequest;
 import com.quiz.application.dto.QuizDTO;
+import com.quiz.application.entity.Question;
+import com.quiz.application.entity.QuestionOption;
 import com.quiz.application.entity.Quiz;
 import com.quiz.application.entity.User;
 import com.quiz.application.exception.ResourceNotFoundException;
 import com.quiz.application.exception.UnauthorizedException;
+import com.quiz.application.repository.QuestionRepository;
 import com.quiz.application.repository.QuizRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,9 @@ public class QuizService {
     
     @Autowired
     private QuizRepository quizRepository;
+
+    @Autowired
+    private QuestionRepository questionRepository;
     
     @Autowired
     private UserService userService;
@@ -42,11 +48,34 @@ public class QuizService {
                 .difficultyLevel(Quiz.DifficultyLevel.valueOf(request.getDifficultyLevel()))
                 .timeLimitMinutes(request.getTimeLimitMinutes())
                 .passingScore(request.getPassingScore())
-                .active(request.getActive())
                 .createdBy(currentUser)
                 .build();
-        
         quiz = quizRepository.save(quiz);
+
+        if (request.getQuestions() != null && !request.getQuestions().isEmpty()) {
+            for (var questionRequest : request.getQuestions()) {
+                Question question = Question.builder()
+                        .questionText(questionRequest.getQuestionText())
+                        .questionType(Question.QuestionType.valueOf(questionRequest.getQuestionType()))
+                        .points(questionRequest.getPoints())
+                        .questionOrder(questionRequest.getQuestionOrder())
+                        .explanation(questionRequest.getExplanation())
+                        .quiz(quiz)
+                        .build();
+
+                for (int i = 0; i < questionRequest.getOptions().size(); i++) {
+                    var optReq = questionRequest.getOptions().get(i);
+                    QuestionOption option = QuestionOption.builder()
+                            .optionText(optReq.getOptionText())
+                            .isCorrect(optReq.getIsCorrect())
+                            .optionOrder(optReq.getOptionOrder() != null ? optReq.getOptionOrder() : i + 1)
+                            .build();
+                    question.addOption(option);
+                }
+                questionRepository.save(question);
+            }
+        }
+
         return convertToDTO(quiz);
     }
     
@@ -68,7 +97,6 @@ public class QuizService {
         quiz.setDifficultyLevel(Quiz.DifficultyLevel.valueOf(request.getDifficultyLevel()));
         quiz.setTimeLimitMinutes(request.getTimeLimitMinutes());
         quiz.setPassingScore(request.getPassingScore());
-        quiz.setActive(request.getActive());
         
         quiz = quizRepository.save(quiz);
         return convertToDTO(quiz);
@@ -97,15 +125,15 @@ public class QuizService {
     }
     
     @Transactional(readOnly = true)
-    public List<QuizDTO> getAllActiveQuizzes() {
-        return quizRepository.findByActiveTrue().stream()
+    public List<QuizDTO> getAllQuizzes() {
+        return quizRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
     
     @Transactional(readOnly = true)
     public List<QuizDTO> getQuizzesByTopic(String topic) {
-        return quizRepository.findByActiveTrueAndTopic(topic).stream()
+        return quizRepository.findByTopic(topic).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -132,7 +160,6 @@ public class QuizService {
                 .difficultyLevel(quiz.getDifficultyLevel().name())
                 .timeLimitMinutes(quiz.getTimeLimitMinutes())
                 .passingScore(quiz.getPassingScore())
-                .active(quiz.getActive())
                 .createdById(quiz.getCreatedBy().getId())
                 .createdByUsername(quiz.getCreatedBy().getUsername())
                 .totalQuestions(quiz.getQuestions().size())

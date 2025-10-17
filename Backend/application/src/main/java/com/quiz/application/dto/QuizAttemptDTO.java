@@ -18,12 +18,17 @@ public class QuizAttemptDTO {
     private String username;
     private Long quizId;
     private String quizTitle;
+    private Integer timeLimitMinutes;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Integer scoreObtained;
     private Integer totalScore;
     private Double percentageScore;
+    private Boolean isPassed;
     private String status;
     private Integer timeTakenMinutes;
     private List<UserAnswerDTO> answers;
+    private List<QuestionDTO> questions;
+    private Integer totalQuestions;
+    private Integer attemptCount;
 }

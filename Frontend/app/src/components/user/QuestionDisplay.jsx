@@ -1,58 +1,53 @@
 import React from 'react';
+import Button from '../common/Button';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
-const QuestionDisplay = ({ 
-  question, 
-  questionNumber, 
-  totalQuestions, 
-  selectedAnswer, 
-  onAnswerSelect,
-  showResult = false,
-  correctAnswer = null
+const QuestionDisplay = ({
+  question,
+  questionNumber,
+  totalQuestions,
+  answerState, // { selection: [], result: null } or { selection: [1], result: { ... } }
+  onSelectionChange,
+  onAnswerSubmit,
 }) => {
-  const isMultipleChoice = question.type === 'MULTIPLE_CHOICE';
 
-  const handleOptionClick = (optionIndex) => {
-    if (showResult) return;
+  const isAnswered = !!answerState?.result;
+  const isMultipleChoice = question.questionType === 'MULTIPLE_CHOICE';
 
+  const handleOptionClick = (optionId) => {
+    if (isAnswered) return;
+
+    let newSelection;
     if (isMultipleChoice) {
-      const currentAnswers = selectedAnswer || [];
-      if (currentAnswers.includes(optionIndex)) {
-        onAnswerSelect(currentAnswers.filter(idx => idx !== optionIndex));
+      const currentSelection = answerState?.selection || [];
+      if (currentSelection.includes(optionId)) {
+        newSelection = currentSelection.filter(id => id !== optionId);
       } else {
-        onAnswerSelect([...currentAnswers, optionIndex]);
+        newSelection = [...currentSelection, optionId];
       }
     } else {
-      onAnswerSelect(optionIndex);
+      newSelection = [optionId];
     }
+    onSelectionChange(question.id, newSelection);
   };
 
-  const isOptionSelected = (optionIndex) => {
-    if (isMultipleChoice) {
-      return selectedAnswer?.includes(optionIndex) || false;
-    }
-    return selectedAnswer === optionIndex;
-  };
-
-  const getOptionStyle = (optionIndex) => {
+  const getOptionStyle = (option) => {
     const baseStyle = "w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ";
-    
-    if (showResult) {
-      const isCorrect = isMultipleChoice 
-        ? correctAnswer?.includes(optionIndex)
-        : correctAnswer === optionIndex;
-      
-      if (isCorrect) {
-        return baseStyle + "bg-green-50 border-green-500 text-green-900";
-      }
-      if (isOptionSelected(optionIndex) && !isCorrect) {
-        return baseStyle + "bg-red-50 border-red-500 text-red-900";
-      }
-      return baseStyle + "bg-gray-50 border-gray-300 text-gray-600";
-    }
+    const isSelected = answerState?.selection?.includes(option.id);
 
-    if (isOptionSelected(optionIndex)) {
-      return baseStyle + "bg-primary border-primary text-white hover:bg-indigo-700";
+    if (isAnswered) {
+      if (answerState.result.selectedOptionIds.includes(option.id)) {
+        return answerState.result.isCorrect 
+            ? baseStyle + "bg-green-100 border-green-500 text-green-900 ring-2 ring-green-500"
+            : baseStyle + "bg-red-100 border-red-500 text-red-900 ring-2 ring-red-500";
+      } else if (option.isCorrect) {
+        // Show the correct answer if the user missed it
+        return baseStyle + "bg-green-50 border-green-400 text-green-800";
+      }
+    } else {
+        if (isSelected) {
+            return baseStyle + "bg-primary border-primary text-white";
+        }
     }
     
     return baseStyle + "bg-white border-gray-300 text-gray-900 hover:border-primary hover:bg-blue-50";
@@ -60,21 +55,11 @@ const QuestionDisplay = ({
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8">
-      {/* Question Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-gray-500">
-            Question {questionNumber} of {totalQuestions}
-          </span>
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            question.difficulty === 'EASY' ? 'bg-green-100 text-green-800' :
-            question.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-            {question.difficulty}
-          </span>
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <p className="text-sm font-medium text-gray-500">
+          Question {questionNumber} of {totalQuestions}
+        </p>
+        <h2 className="text-2xl font-bold text-gray-900 my-2">
           {question.questionText}
         </h2>
         {isMultipleChoice && (
@@ -84,24 +69,23 @@ const QuestionDisplay = ({
         )}
       </div>
 
-      {/* Options */}
       <div className="space-y-3">
-        {question.options.map((option, index) => (
+        {question.options.map((option) => (
           <button
-            key={index}
-            onClick={() => handleOptionClick(index)}
-            disabled={showResult}
-            className={getOptionStyle(index)}
+            key={option.id}
+            onClick={() => handleOptionClick(option.id)}
+            disabled={isAnswered}
+            className={getOptionStyle(option)}
           >
             <div className="flex items-center justify-between">
-              <span className="flex-1">{option}</span>
-              {showResult && (
+              <span className="flex-1 text-left">{option.optionText}</span>
+              {isAnswered && answerState.result.selectedOptionIds.includes(option.id) && (
                 <span>
-                  {(isMultipleChoice ? correctAnswer?.includes(index) : correctAnswer === index) ? (
+                  {answerState.result.isCorrect ? (
                     <FaCheckCircle className="text-green-600" />
-                  ) : isOptionSelected(index) ? (
+                  ) : (
                     <FaTimesCircle className="text-red-600" />
-                  ) : null}
+                  )}
                 </span>
               )}
             </div>
@@ -109,10 +93,19 @@ const QuestionDisplay = ({
         ))}
       </div>
 
-      {/* Explanation (if shown after answer) */}
-      {showResult && question.explanation && (
+      {!isAnswered ? (
+        <div className="mt-6">
+          <Button 
+            onClick={() => onAnswerSubmit(question.id)}
+            disabled={!answerState?.selection || answerState.selection.length === 0}
+            fullWidth
+          >
+            Submit Answer
+          </Button>
+        </div>
+      ) : question.explanation && (
         <div className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
-          <p className="text-sm font-semibold text-blue-900 mb-1">Explanation:</p>
+          <h4 className="font-bold text-blue-900">Explanation</h4>
           <p className="text-sm text-blue-800">{question.explanation}</p>
         </div>
       )}
@@ -121,3 +114,4 @@ const QuestionDisplay = ({
 };
 
 export default QuestionDisplay;
+

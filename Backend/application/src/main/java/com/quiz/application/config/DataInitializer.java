@@ -84,7 +84,6 @@ public class DataInitializer implements CommandLineRunner {
                         .difficultyLevel(Quiz.DifficultyLevel.MEDIUM)
                         .timeLimitMinutes(30)
                         .passingScore(70)
-                        .active(true)
                         .createdBy(admin)
                         .build();
                 System.out.println("DATA-INITIALIZER: Attempting to save sample quiz...");
