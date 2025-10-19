@@ -5,60 +5,60 @@ import Button from '../common/Button';
 import { validateRequired } from '../../utils/validators';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 
-const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
+const QuestionForm = ({ question = null, onSubmit, onCancel, showButtons = false, onChange, onRemove }) => {
   const [formData, setFormData] = useState({
     questionText: '',
     questionType: 'SINGLE_CHOICE',
-    difficulty: 'MEDIUM',
-    options: ['', '', '', ''],
-    correctAnswers: [],
+    points: 1,
     explanation: '',
+    options: [
+      { optionText: '', isCorrect: false },
+      { optionText: '', isCorrect: false },
+    ],
   });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const handleDataChange = (newFormData) => {
+    setFormData(newFormData);
+    if (onChange) {
+      onChange(newFormData);
+    }
+  };
 
   useEffect(() => {
     if (question) {
       setFormData({
         questionText: question.questionText || '',
         questionType: question.questionType || 'SINGLE_CHOICE',
-        difficulty: question.difficulty || 'MEDIUM',
-        options: question.options.map(o => o.optionText) || ['', '', '', ''],
-        correctAnswers: question.options.map((o, i) => o.isCorrect ? i : -1).filter(i => i !== -1) || [],
+        points: question.points || 1,
         explanation: question.explanation || '',
+        options: question.options && question.options.length > 0 ? question.options : [
+          { optionText: '', isCorrect: false },
+          { optionText: '', isCorrect: false },
+        ],
       });
     }
   }, [question]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
+    const newFormData = { ...formData, [name]: value };
+    handleDataChange(newFormData);
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const handleOptionChange = (index, value) => {
+  const handleOptionChange = (index, field, value) => {
     const newOptions = [...formData.options];
-    newOptions[index] = value;
-    setFormData(prev => ({
-      ...prev,
-      options: newOptions
-    }));
+    newOptions[index][field] = value;
+    handleDataChange({ ...formData, options: newOptions });
   };
 
   const addOption = () => {
-    setFormData(prev => ({
-      ...prev,
-      options: [...prev.options, '']
-    }));
+    handleDataChange({
+      ...formData,
+      options: [...formData.options, { optionText: '', isCorrect: false }]
+    });
   };
 
   const removeOption = (index) => {
@@ -66,93 +66,62 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
       toast.error('A question must have at least 2 options');
       return;
     }
-    
     const newOptions = formData.options.filter((_, i) => i !== index);
-    const newCorrectAnswers = formData.correctAnswers
-      .filter(ans => ans !== index)
-      .map(ans => ans > index ? ans - 1 : ans);
-    
-    setFormData(prev => ({
-      ...prev,
-      options: newOptions,
-      correctAnswers: newCorrectAnswers
-    }));
+    handleDataChange({ ...formData, options: newOptions });
   };
 
   const handleCorrectAnswerToggle = (index) => {
+    const newOptions = [...formData.options];
     if (formData.questionType === 'SINGLE_CHOICE') {
-      setFormData(prev => ({
-        ...prev,
-        correctAnswers: [index]
-      }));
+      newOptions.forEach((option, i) => {
+        option.isCorrect = i === index;
+      });
     } else {
-      const newCorrectAnswers = formData.correctAnswers.includes(index)
-        ? formData.correctAnswers.filter(ans => ans !== index)
-        : [...formData.correctAnswers, index];
-      
-      setFormData(prev => ({
-        ...prev,
-        correctAnswers: newCorrectAnswers
-      }));
+      newOptions[index].isCorrect = !newOptions[index].isCorrect;
     }
+    handleDataChange({ ...formData, options: newOptions });
   };
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!validateRequired(formData.questionText)) {
       newErrors.questionText = 'Question text is required';
     }
-
-    const filledOptions = formData.options.filter(opt => opt.trim() !== '');
-    if (filledOptions.length < 2) {
-      newErrors.options = 'At least 2 options are required';
+    const hasAtLeastTwoOptions = formData.options.filter(opt => validateRequired(opt.optionText)).length >= 2;
+    if (!hasAtLeastTwoOptions) {
+      newErrors.options = 'At least 2 options with text are required';
     }
-
-    if (formData.correctAnswers.length === 0) {
-      newErrors.correctAnswers = 'Please select at least one correct answer';
+    const hasCorrectAnswer = formData.options.some(opt => opt.isCorrect);
+    if (!hasCorrectAnswer) {
+      newErrors.correctAnswer = 'At least one option must be marked as correct';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) {
       toast.error('Please fix the errors in the form');
       return;
     }
-
     setLoading(true);
-
     try {
-      const formattedOptions = formData.options
-        .map((optionText, index) => ({
-          optionText: optionText,
-          isCorrect: formData.correctAnswers.includes(index),
-          optionOrder: index + 1,
-        }))
-        .filter(opt => opt.optionText.trim() !== '');
-
-      const submitData = {
-        ...formData,
-        options: formattedOptions,
-      };
-      delete submitData.correctAnswers;
-
-      await onSubmit(submitData);
-      toast.success(question ? 'Question updated successfully!' : 'Question added successfully!');
+      await onSubmit(formData);
     } catch (error) {
-      toast.error(error || 'Failed to save question');
+      // Error is handled by the parent
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 border p-4 rounded-lg relative">
+      {onRemove && (
+        <Button type="button" variant="danger" onClick={onRemove} className="absolute top-2 right-2">
+          <FaTrash />
+        </Button>
+      )}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Question Text <span className="text-red-500">*</span>
@@ -167,9 +136,7 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
             errors.questionText ? 'border-red-500' : 'border-gray-300'
           }`}
         />
-        {errors.questionText && (
-          <p className="text-red-500 text-sm mt-1">{errors.questionText}</p>
-        )}
+        {errors.questionText && <p className="text-red-500 text-sm mt-1">{errors.questionText}</p>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -186,28 +153,15 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
             <option value="SINGLE_CHOICE">Single Choice</option>
             <option value="MULTIPLE_CHOICE">Multiple Choice</option>
           </select>
-          <p className="text-xs text-gray-500 mt-1">
-            {formData.questionType === 'SINGLE_CHOICE' 
-              ? 'User can select only one option' 
-              : 'User can select multiple options'}
-          </p>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Difficulty <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="difficulty"
-            value={formData.difficulty}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-          >
-            <option value="EASY">Easy</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HARD">Hard</option>
-          </select>
-        </div>
+        <Input
+          label="Points"
+          type="number"
+          name="points"
+          value={formData.points}
+          onChange={handleChange}
+          placeholder="Points for this question"
+        />
       </div>
 
       <div>
@@ -225,48 +179,40 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
             <span>Add Option</span>
           </Button>
         </div>
+        {errors.options && <p className="text-red-500 text-sm mt-1">{errors.options}</p>}
+        {errors.correctAnswer && <p className="text-red-500 text-sm mt-1">{errors.correctAnswer}</p>}
 
-        {errors.options && (
-          <p className="text-red-500 text-sm mb-2">{errors.options}</p>
-        )}
-
-        <div className="space-y-3">
+        <div className="space-y-3 mt-2">
           {formData.options.map((option, index) => (
             <div key={index} className="flex items-center space-x-2">
               <input
                 type={formData.questionType === 'SINGLE_CHOICE' ? 'radio' : 'checkbox'}
-                checked={formData.correctAnswers.includes(index)}
+                name={`correctAnswer-${formData.questionType === 'SINGLE_CHOICE' ? 'group' : index}`}
+                checked={option.isCorrect}
                 onChange={() => handleCorrectAnswerToggle(index)}
                 className="w-5 h-5 text-primary border-gray-300 focus:ring-primary"
                 title="Mark as correct answer"
               />
-              <input
+              <Input
                 type="text"
-                value={option}
-                onChange={(e) => handleOptionChange(index, e.target.value)}
+                value={option.optionText}
+                onChange={(e) => handleOptionChange(index, 'optionText', e.target.value)}
                 placeholder={`Option ${index + 1}`}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="flex-1"
               />
               {formData.options.length > 2 && (
-                <button
+                <Button
                   type="button"
+                  variant="danger"
                   onClick={() => removeOption(index)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2"
                 >
                   <FaTrash />
-                </button>
+                </Button>
               )}
             </div>
           ))}
         </div>
-
-        {errors.correctAnswers && (
-          <p className="text-red-500 text-sm mt-2">{errors.correctAnswers}</p>
-        )}
-
-        <p className="text-xs text-gray-500 mt-2">
-          Check the {formData.questionType === 'SINGLE_CHOICE' ? 'radio button' : 'checkbox(es)'} to mark correct answer(s)
-        </p>
       </div>
 
       <div>
@@ -281,30 +227,18 @@ const QuestionForm = ({ question = null, onSubmit, onCancel }) => {
           rows="3"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
         />
-        <p className="text-xs text-gray-500 mt-1">
-          This will be shown to users after they submit their answer
-        </p>
       </div>
-
-      <div className="flex space-x-4">
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={loading}
-          className="flex-1"
-        >
-          {loading ? 'Saving...' : question ? 'Update Question' : 'Add Question'}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={loading}
-          className="flex-1"
-        >
-          Cancel
-        </Button>
-      </div>
+      
+      {showButtons && (
+        <div className="flex justify-end space-x-4 pt-4">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" disabled={loading}>
+            {loading ? 'Saving...' : (question ? 'Update Question' : 'Add Question')}
+          </Button>
+        </div>
+      )}
     </form>
   );
 };

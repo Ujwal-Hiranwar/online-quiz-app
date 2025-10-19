@@ -75,50 +75,6 @@ public class QuestionService {
     }
     
     @Transactional
-    public QuestionDTO updateQuestion(Long id, QuestionCreateRequest request) {
-        User currentUser = userService.getCurrentUser();
-        
-        Question question = questionRepository.findByIdWithOptions(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Question not found with id: " + id));
-        
-        Quiz quiz = question.getQuiz();
-        
-        // Only the creator or admin can update questions
-        if (currentUser.getRole() != User.Role.ADMIN && !quiz.getCreatedBy().getId().equals(currentUser.getId())) {
-            throw new UnauthorizedException("You don't have permission to update this question");
-        }
-        
-        // Validate that at least one option is correct
-        boolean hasCorrectOption = request.getOptions().stream()
-                .anyMatch(opt -> opt.getIsCorrect());
-        if (!hasCorrectOption) {
-            throw new BadRequestException("At least one option must be marked as correct");
-        }
-        
-        question.setQuestionText(request.getQuestionText());
-        question.setQuestionType(Question.QuestionType.valueOf(request.getQuestionType()));
-        question.setPoints(request.getPoints());
-        question.setQuestionOrder(request.getQuestionOrder());
-        question.setExplanation(request.getExplanation());
-        
-        // Remove old options and add new ones
-        question.getOptions().clear();
-        
-        for (int i = 0; i < request.getOptions().size(); i++) {
-            var optReq = request.getOptions().get(i);
-            QuestionOption option = QuestionOption.builder()
-                    .optionText(optReq.getOptionText())
-                    .isCorrect(optReq.getIsCorrect())
-                    .optionOrder(optReq.getOptionOrder() != null ? optReq.getOptionOrder() : i + 1)
-                    .build();
-            question.addOption(option);
-        }
-        
-        question = questionRepository.save(question);
-        return convertToDTO(question);
-    }
-    
-    @Transactional
     public void deleteQuestion(Long id) {
         User currentUser = userService.getCurrentUser();
         

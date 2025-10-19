@@ -40,6 +40,9 @@ public class Quiz extends BaseEntity {
     
     @Column(name = "passing_score")
     private Integer passingScore;
+
+    @Column(nullable = false)
+    private Boolean active = true;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)

@@ -48,6 +48,7 @@ public class QuizService {
                 .difficultyLevel(Quiz.DifficultyLevel.valueOf(request.getDifficultyLevel()))
                 .timeLimitMinutes(request.getTimeLimitMinutes())
                 .passingScore(request.getPassingScore())
+                .active(request.getActive())
                 .createdBy(currentUser)
                 .build();
         quiz = quizRepository.save(quiz);
@@ -97,6 +98,7 @@ public class QuizService {
         quiz.setDifficultyLevel(Quiz.DifficultyLevel.valueOf(request.getDifficultyLevel()));
         quiz.setTimeLimitMinutes(request.getTimeLimitMinutes());
         quiz.setPassingScore(request.getPassingScore());
+        quiz.setActive(request.getActive());
         
         quiz = quizRepository.save(quiz);
         return convertToDTO(quiz);
@@ -160,6 +162,7 @@ public class QuizService {
                 .difficultyLevel(quiz.getDifficultyLevel().name())
                 .timeLimitMinutes(quiz.getTimeLimitMinutes())
                 .passingScore(quiz.getPassingScore())
+                .active(quiz.getActive())
                 .createdById(quiz.getCreatedBy().getId())
                 .createdByUsername(quiz.getCreatedBy().getUsername())
                 .totalQuestions(quiz.getQuestions().size())

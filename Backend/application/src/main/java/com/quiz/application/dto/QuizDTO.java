@@ -20,6 +20,7 @@ public class QuizDTO {
     private String difficultyLevel;
     private Integer timeLimitMinutes;
     private Integer passingScore;
+    private Boolean active;
     private Long createdById;
     private String createdByUsername;
     private Integer totalQuestions;

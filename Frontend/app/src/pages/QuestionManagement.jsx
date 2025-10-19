@@ -7,7 +7,7 @@ import Loader from '../components/common/Loader';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import QuestionForm from '../components/admin/QuestionForm';
-import { FaArrowLeft, FaPlus, FaEdit, FaTrash, FaCheckCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaTrash, FaCheckCircle, FaEdit } from 'react-icons/fa';
 
 const QuestionManagement = () => {
   const { quizId } = useParams();
@@ -69,10 +69,10 @@ const QuestionManagement = () => {
 
   const handleSubmitQuestion = async (questionData) => {
     try {
-      const submitPayload = { ...questionData, quizId: parseInt(quizId) };
       if (isEditing && selectedQuestion) {
-        await api.put(`/questions/${selectedQuestion.id}`, submitPayload);
+        await api.put(`/questions/${selectedQuestion.id}`, questionData);
       } else {
+        const submitPayload = { ...questionData, quizId: parseInt(quizId) };
         await api.post('/questions', submitPayload);
       }
       setShowModal(false);
@@ -233,6 +233,7 @@ const QuestionManagement = () => {
             question={selectedQuestion}
             onSubmit={handleSubmitQuestion}
             onCancel={() => setShowModal(false)}
+            showButtons={true}
           />
         </Modal>
       </div>
@@ -241,3 +242,4 @@ const QuestionManagement = () => {
 };
 
 export default QuestionManagement;
+

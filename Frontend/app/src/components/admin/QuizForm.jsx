@@ -3,8 +3,8 @@ import { toast } from 'react-toastify';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import { validateRequired } from '../../utils/validators';
-import { FaPlus, FaTrash } from 'react-icons/fa';
-import QuestionForm from './QuestionForm'; // We will reuse the question form logic
+import QuestionForm from './QuestionForm';
+import { FaPlus } from 'react-icons/fa';
 
 const QuizForm = ({ quiz = null, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -12,10 +12,11 @@ const QuizForm = ({ quiz = null, onSubmit, onCancel }) => {
     description: '',
     topic: '',
     difficultyLevel: 'MEDIUM',
-    timeLimit: '1',
+    timeLimitMinutes: '1',
     passingScore: '',
     active: true,
   });
+
   const [questions, setQuestions] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -50,18 +51,6 @@ const QuizForm = ({ quiz = null, onSubmit, onCancel }) => {
     }
   };
 
-  const handleAddQuestion = () => {
-    setQuestions(prev => [...prev, { questionText: '', type: 'SINGLE_CHOICE', options: [{ optionText: '', isCorrect: false }, { optionText: '', isCorrect: false }, { optionText: '', isCorrect: false }, { optionText: '', isCorrect: false }], explanation: '' }]);
-  };
-
-  const handleRemoveQuestion = (index) => {
-    setQuestions(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleQuestionChange = (index, updatedQuestion) => {
-    setQuestions(prev => prev.map((q, i) => i === index ? updatedQuestion : q));
-  };
-
   const validateForm = () => {
     const newErrors = {};
 
@@ -89,6 +78,33 @@ const QuizForm = ({ quiz = null, onSubmit, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleAddQuestion = () => {
+    setQuestions([...questions, {
+      questionText: '',
+      questionType: 'SINGLE_CHOICE',
+      difficulty: 'MEDIUM',
+      options: [
+        { optionText: '', isCorrect: false },
+        { optionText: '', isCorrect: false },
+        { optionText: '', isCorrect: false },
+        { optionText: '', isCorrect: false },
+      ],
+      explanation: '',
+    }]);
+  };
+
+  const handleQuestionChange = (index, updatedQuestion) => {
+    const newQuestions = [...questions];
+    newQuestions[index] = updatedQuestion;
+    setQuestions(newQuestions);
+  };
+
+  const handleRemoveQuestion = (index) => {
+    const newQuestions = [...questions];
+    newQuestions.splice(index, 1);
+    setQuestions(newQuestions);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -102,13 +118,14 @@ const QuizForm = ({ quiz = null, onSubmit, onCancel }) => {
     try {
       const formattedQuestions = questions.map(q => ({
         ...q,
-        questionType: q.type,
+        questionType: q.questionType,
       }));
 
       const submitData = {
         ...formData,
         timeLimitMinutes: formData.timeLimitMinutes ? parseInt(formData.timeLimitMinutes) : null,
         passingScore: formData.passingScore ? parseInt(formData.passingScore) : null,
+        active: formData.active,
         questions: formattedQuestions,
       };
 
@@ -148,11 +165,6 @@ const QuizForm = ({ quiz = null, onSubmit, onCancel }) => {
         required
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Difficulty" name="difficultyLevel" value={formData.difficultyLevel} onChange={handleChange} type="select">
-              <option value="EASY">Easy</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HARD">Hard</option>
-          </Input>
         <Input
           label="Time Limit (minutes)"
           name="timeLimitMinutes"
@@ -161,27 +173,39 @@ const QuizForm = ({ quiz = null, onSubmit, onCancel }) => {
           onChange={handleChange}
           error={errors.timeLimitMinutes}
         />
-      </div>
         <Input
-            label="Passing Score"
-            name="passingScore"
-            type="number"
-            value={formData.passingScore}
-            onChange={handleChange}
-            placeholder="e.g., 70 for 70%"
-            error={errors.passingScore}
+          label="Passing Score"
+          name="passingScore"
+          type="number"
+          value={formData.passingScore}
+          onChange={handleChange}
+          error={errors.passingScore}
         />
+      </div>
 
+      <div class="flex items-center">
+        <input
+          type="checkbox"
+          id="active"
+          name="active"
+          checked={formData.active}
+          onChange={handleChange}
+          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+        />
+        <label htmlFor="active" className="ml-2 text-sm text-gray-700">
+          Make this quiz active and visible to users
+        </label>
+      </div>
 
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Questions</h3>
-        {questions.map((q, index) => (
-          <div key={index} className="p-4 border rounded-lg">
-            <QuestionForm question={q} onQuestionChange={(updated) => handleQuestionChange(index, updated)} />
-            <Button type="button" variant="danger" onClick={() => handleRemoveQuestion(index)} className="mt-2">
-              Remove Question
-            </Button>
-          </div>
+        {questions.map((question, index) => (
+          <QuestionForm
+            key={index}
+            question={question}
+            onChange={(updatedQuestion) => handleQuestionChange(index, updatedQuestion)}
+            onRemove={() => handleRemoveQuestion(index)}
+          />
         ))}
         <Button type="button" variant="outline" onClick={handleAddQuestion} className="mt-2">
           <FaPlus className="inline-block mr-2" />

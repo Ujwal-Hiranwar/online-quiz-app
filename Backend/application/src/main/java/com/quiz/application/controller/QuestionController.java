@@ -28,15 +28,6 @@ public class QuestionController {
                 .body(ApiResponse.success(question, "Question created successfully"));
     }
     
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<QuestionDTO>> updateQuestion(
-            @PathVariable Long id,
-            @Valid @RequestBody QuestionCreateRequest request) {
-        QuestionDTO question = questionService.updateQuestion(id, request);
-        return ResponseEntity.ok(ApiResponse.success(question, "Question updated successfully"));
-    }
-    
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteQuestion(@PathVariable Long id) {

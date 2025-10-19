@@ -25,7 +25,11 @@ public class QuizCreateRequest {
     
     private Integer timeLimitMinutes;
     
+    @NotNull(message = "Passing score is required")
     private Integer passingScore;
+
+    @NotNull(message = "Active status is required")
+    private Boolean active = true;
 
     private List<QuestionInQuizCreateRequest> questions;
 }
