@@ -1,31 +1,63 @@
-# IDE files
+# IDE specific files
 .idea/
+.vscode/
 *.iml
 *.iws
+*.ipr
 .classpath
 .project
 .settings
-.vscode/
+.factorypath
+.springBeans
+.sts4-cache
+.apt_generated
+
+# OS generated files
+.DS_Store
+Thumbs.db
+*Zone.Identifier
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Maven/Java
-Backend/application/target/
-Backend/application/.mvn/
-*.log
+target/
+pom.xml.bak
+*.jar
+*.war
+HELP.md
 
-# Node.js
-Frontend/app/node_modules/
-Frontend/app/build/
-Frontend/app/dist/
+# Don't ignore the maven wrapper jar file.
+!/.mvn/wrapper/maven-wrapper.jar
+!/Backend/application/.mvn/wrapper/maven-wrapper.jar
+
+# Ignore Maven wrapper scripts, but not the jar
+Backend/application/mvnw
+Backend/application/mvnw.cmd
+
+# Environment-specific properties
+application-local.properties
+application-prod.properties
+
+# Node
+node_modules/
+dist/
+build/
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 coverage/
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# Documentation
+Application Documentation.pdf
