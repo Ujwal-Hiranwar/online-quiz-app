@@ -16,23 +16,14 @@ containerized using docker for ease of deployment.
 
 **Key Features and Functionality**
 
-- **User Authentication:** Secure user registration and login system using JWT (JSON
-    Web Tokens).
-- **Role-Based Access Control:** Separate dashboards and permissions for USER and
-    ADMIN roles.
-- **Quiz Management (Admin):** Admins can create, update, and delete quizzes,
-    manage quiz topics, difficulty levels, and time limits.
-- **Question Management (Admin):** Admins can add, edit, and delete questions (both
-    single and multiple choice) within each quiz.
-- **Quiz Taking (User):** Users can browse available quizzes, take them within a timed
-    environment, and submit their answers. He can also get feedback on every question
-    just after submitting the question and He will get final score after finishing the test.
-- **Scoring and Results:** Automatic scoring upon quiz completion with detailed
-    results, including score, percentage, and correct/incorrect answers.
-- **Quiz History:** Users can view their past quiz attempts and track their performance
-    over time.
-- **Leaderboards:** Global and quiz-specific leaderboards to foster a competitive
-    environment.
+- **User Authentication:** Secure user registration and login system using JWT (JSON Web Tokens).
+- **Role-Based Access Control:** Separate dashboards and permissions for USER and ADMIN roles.
+- **Quiz Management (Admin):** Admins can create, update, and delete quizzes, manage quiz topics, difficulty levels, and time limits.
+- **Question Management (Admin):** Admins can add, edit, and delete questions (both single and multiple choice) within each quiz.
+- **Quiz Taking (User):** Users can browse available quizzes, take them within a timed environment, and submit their answers. He can also get feedback on every question just after submitting the question and He will get final score after finishing the test.
+- **Scoring and Results:** Automatic scoring upon quiz completion with detailed results, including score, percentage, and correct/incorrect answers.
+- **Quiz History:** Users can view their past quiz attempts and track their performance over time.
+- **Leaderboards:** Global and quiz-specific leaderboards to foster a competitive environment.
 
 **Target Audience**
 
@@ -87,14 +78,12 @@ This is the simplest way to get the application running.
 
 
 1. **Prerequisites:** Ensure you have Docker installed and running on your system.
-2. **Run the Container:** Execute the following command in your terminal. This
-    command will pull the image from Docker Hub and start the application.
+2. **Run the Container:** Execute the following command in your terminal. This command will pull the image from Docker Hub and start the application.
 
 ```
 Docker command : docker run -d -p 8081:8081 -e DB_URL="your_database_url" -e
 DB_USERNAME="your_database_username" -e
-DB_PASSWORD="your_database_password" ujwalhiranwar/online-quiz-
-application:v
+DB_PASSWORD="your_database_password" ujwalhiranwar/online-quiz-application:v
 ```
 ```
 You have to add your own database credentials in this command.
@@ -139,8 +128,7 @@ The application uses a relational database schema to store all its data. The cor
 - **Question:** Represents a single question within a quiz.
 - **QuestionOption:** Stores the possible answers for a multiple-choice question.
 - **QuizAttempt:** Records a user's attempt at a particular quiz.
-- **UserAnswer:** Stores the specific option(s) a user selected for a question during an
-    attempt.
+- **UserAnswer:** Stores the specific option(s) a user selected for a question during an attempt.
 
 ## 5. User Guide
 
@@ -164,8 +152,7 @@ The application uses a relational database schema to store all its data. The cor
 
 4. **Viewing Results:**
     - After submitting a quiz, you will be redirected to the results page.
-    - Here you can see your score, percentage, and a summary of correct/incorrect
-       answers.
+    - Here you can see your score, percentage, and a summary of correct/incorrect answers.
 
 **For Administrators**
 
@@ -182,33 +169,21 @@ The application uses a relational database schema to store all its data. The cor
     - You can edit or delete existing questions from this page.
 
 
-3. **Leaderboard feature** : users can see how better they have performed In the
-    leaderboard.
+3. **Leaderboard feature** : users can see how better they have performed In the leaderboard.
 
 
 ## 6. Architecture & Design
 
-The backend follows a classic **layered architecture** , which promotes separation of
-concerns and makes the application easier to maintain and scale.
+The backend follows a classic **layered architecture** , which promotes separation of concerns and makes the application easier to maintain and scale.
 
-- **Controller Layer (/controller):** Exposes the REST API endpoints. It handles
-    incoming HTTP requests, validates them, and delegates the business logic to the
-    Service Layer.
-- **Service Layer (/service):** Contains the core business logic of the application. It
-    orchestrates calls to the Repository Layer and implements the main functionalities
-    like creating quizzes, calculating scores, etc.
-- **Repository Layer (/repository):** Responsible for all data access. It uses Spring
-    Data JPA to interact with the database, providing a clean abstraction over database
-    operations.
-- **Entity Layer (/entity):** Defines the JPA entities that are mapped to the database
-    tables.
-- **DTO Layer (/dto):** Data Transfer Objects are used to transfer data between the
-    client and the server, preventing direct exposure of JPA entities.
-- **Security Layer (/security):** Handles authentication and authorization using Spring
-    Security and JWT.
+- **Controller Layer (/controller):** Exposes the REST API endpoints. It handles incoming HTTP requests, validates them, and delegates the business logic to the Service Layer.
+- **Service Layer (/service):** Contains the core business logic of the application. It orchestrates calls to the Repository Layer and implements the main functionalities like creating quizzes, calculating scores, etc.
+- **Repository Layer (/repository):** Responsible for all data access. It uses Spring Data JPA to interact with the database, providing a clean abstraction over database operations.
+- **Entity Layer (/entity):** Defines the JPA entities that are mapped to the database tables.
+- **DTO Layer (/dto):** Data Transfer Objects are used to transfer data between the client and the server, preventing direct exposure of JPA entities.
+- **Security Layer (/security):** Handles authentication and authorization using Spring Security and JWT.
 
-This design follows the **Model-View-Controller (MVC)** pattern, where Spring Boot acts as
-the Controller and Model, and the React frontend serves as the View.
+This design follows the **Model-View-Controller (MVC)** pattern, where Spring Boot acts as the Controller and Model, and the React frontend serves as the View.
 
 ## 7. Code Documentation
 
@@ -244,19 +219,10 @@ com.quiz.application:
 
 Security is a critical component of this application.
 
-- **Authentication:** The application uses **JWT (JSON Web Tokens)** for stateless
-    authentication. When a user logs in, a signed JWT is generated and sent to the client.
-    This token must be included in the Authorization header of all subsequent
-    requests to protected endpoints.
-- **Authorization:** Spring Security is used to enforce authorization rules. Endpoints are
-    protected based on user roles (USER, ADMIN) using method-level security
-    (@PreAuthorize) and request matchers in SecurityConfig.
-- **Password Security:** User passwords are never stored in plain text. They are
-    securely hashed using the **BCrypt hashing algorithm** before being saved to the
-    database.
-- **Data Validation:** Input from clients is validated at the DTO level using
-    jakarta.validation annotations (e.g., @NotBlank, @Email) to prevent invalid or
-    malicious data from entering the system.
+- **Authentication:** The application uses **JWT (JSON Web Tokens)** for stateless authentication. When a user logs in, a signed JWT is generated and sent to the client. This token must be included in the Authorization header of all subsequent requests to protected endpoints.
+- **Authorization:** Spring Security is used to enforce authorization rules. Endpoints are protected based on user roles (USER, ADMIN) using method-level security (@PreAuthorize) and request matchers in SecurityConfig.
+- **Password Security:** User passwords are never stored in plain text. They are securely hashed using the **BCrypt hashing algorithm** before being saved to the database.
+- **Data Validation:** Input from clients is validated at the DTO level using jakarta.validation annotations (e.g., @NotBlank, @Email) to prevent invalid or malicious data from entering the system.
 
 ## 9. Features Implemented
 
@@ -282,19 +248,15 @@ Security is a critical component of this application.
 - It is assumed that the user has a stable internet connection.
 
 
-- The application is designed for modern web browsers; compatibility with older
-    browsers is not guaranteed.
+- The application is designed for modern web browsers; compatibility with older browsers is not guaranteed.
 - The user provides valid and correct information during registration.
 
 **Limitations**
 
-- The application does not currently support different question types beyond single
-    and multiple choice (e.g., fill-in-the-blanks, true/false).
-- The user interface is functional but basic; it is not designed for extensive
-    customization.
+- The application does not currently support different question types beyond single and multiple choice (e.g., fill-in-the-blanks, true/false).
+- The user interface is functional but basic; it is not designed for extensive customization.
 - There is no functionality for users to reset their passwords via email.
-- Not integration of AI (Artificial Intelligence) so that admin can add question based
-    on topic and number of questions within few seconds.
+- Not integration of AI (Artificial Intelligence) so that admin can add question based on topic and number of questions within few seconds.
 
 **Potential Future Improvements**
 
@@ -303,7 +265,4 @@ Security is a critical component of this application.
 - Add integration of AI to add questions automatically based on topic.
 - Enhance the admin dashboard with more detailed analytics and charts.
 - Allow users to create and share their own quizzes.
-- Add pagination to quiz and leaderboard lists to improve performance with large
-    datasets.
-
-
+- Add pagination to quiz and leaderboard lists to improve performance with large datasets.
