@@ -112,27 +112,22 @@ This method is for developers who want to run the application from the source co
 
 1. **Prerequisites:** Ensure you have JDK 17, Maven, and MySQL, Git installed.
 2. **Clone the Repository:**
-    Git clone command: git clone https://github.com/Ujwal-Hiranwar/online-
-    quiz-backend.git
+    Git clone command: git clone https://github.com/Ujwal-Hiranwar/online-quiz-backend.git
 3. **Database Setup:**
     - Make sure your MySQL server is running.
-    - Create the database and a dedicated user by executing the following SQL
-       Queries CREATE DATABASE quiz_application;
+    - Create the database and a dedicated user by executing the following SQL Queries CREATE DATABASE quiz_application;
 4. **Configure the Backend:**
     - Navigate to
        Backend/application/src/main/resources/application.properties.
-    - Update the spring.datasource.url, spring.datasource.username, and
-       spring.datasource.password properties to match your MySQL setup.
-    - Add URL “jdbc:mysql://localhost:3306/quiz_application” name and add
-       your other mysql credentials like USERNAME and PASSWORD
+    - Update the spring.datasource.url, spring.datasource.username, and spring.datasource.password properties to match your MySQL setup.
+    - Add URL “jdbc:mysql://localhost:3306/quiz_application” name and add your other mysql credentials like USERNAME and PASSWORD
 5. **Run the Backend:**
     - Open a terminal in the Backend/application directory.
     - Run the following Maven command
        mvn spring-boot:run
     - The backend will start on port 8081.
 6. **Run the Frontend:**
-    - The frontend will be accessible at https://online-quizz-
-       frontend.vercel.app/ and will connect to the backend.
+    - The frontend will be accessible at https://online-quizz-frontend.vercel.app/ and will connect to the backend.
 
 
 ## 4. Database Schema
