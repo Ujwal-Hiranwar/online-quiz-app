@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import api from '../../services/api';
 import Loader from '../common/Loader';
 import { FaClipboardList, FaUsers, FaTrophy } from 'react-icons/fa';
-
 const AdminDashboardComponent = ({ setActiveTab }) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
